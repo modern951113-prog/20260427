@@ -6,9 +6,8 @@ let handPose;
 let hands = [];
 
 function preload() {
-  // Initialize HandPose model. We remove the flip option so the keypoints
-  // match the non-mirrored video feed, which is simpler to map.
-  handPose = ml5.handPose();
+  // Initialize HandPose model with flipped video input
+  handPose = ml5.handPose({ flipped: true });
 }
 
 function mousePressed() {
@@ -22,8 +21,8 @@ function gotHands(results) {
 function setup() {
   // Use the full window for the canvas
   createCanvas(windowWidth, windowHeight);
-  // Standard p5.js video capture
-  video = createCapture(VIDEO);
+  // Create a video capture with the flipped option to match the model
+  video = createCapture(VIDEO, { flipped: true });
   video.hide();
 
   // Start detecting hands
@@ -45,20 +44,26 @@ function draw() {
   // Draw the video feed in the center
   image(video, x, y, videoTargetWidth, videoTargetHeight);
 
-  // Draw the hand landmarks, mapping them to the new video position and size
+  // Loop through all the detected hands
   for (let hand of hands) {
+    // Check if the hand detection confidence is high enough
     if (hand.confidence > 0.1) {
+      // Loop through all the keypoints of the hand
       for (let keypoint of hand.keypoints) {
-        // Map the keypoint from the original video dimensions to the new display dimensions
+        // The keypoint coordinates are relative to the original video dimensions.
+        // We need to map them to the new position and size of the video on the canvas.
         const mappedX = map(keypoint.x, 0, video.width, x, x + videoTargetWidth);
         const mappedY = map(keypoint.y, 0, video.height, y, y + videoTargetHeight);
 
+        // Color-code based on whether it's a left or right hand
         if (hand.handedness == "Left") {
-          fill(255, 0, 255);
+          fill(255, 0, 255); // Magenta for Left
         } else {
-          fill(255, 255, 0);
+          fill(255, 255, 0); // Yellow for Right
         }
+        
         noStroke();
+        // Draw a circle at the mapped keypoint position
         circle(mappedX, mappedY, 16);
       }
     }
@@ -68,8 +73,4 @@ function draw() {
 // Add a function to resize the canvas when the browser window changes
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-}
-      }
-    }
-  }
 }
